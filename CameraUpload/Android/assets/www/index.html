@@ -18,11 +18,11 @@
      */
     function takePicture() {
         navigator.camera.getPicture(
-            function(data) {
+            function(uri) {
                 var img = document.getElementById('camera_image');
                 img.style.visibility = "visible";
                 img.style.display = "block";
-                img.src = data;
+                img.src = uri;
                 document.getElementById('camera_status').innerHTML = "Success";
             },
             function(e) {
@@ -37,11 +37,11 @@
      */
     function selectPicture() {
         navigator.camera.getPicture(
-            function(data) {
+            function(uri) {
                 var img = document.getElementById('camera_image');
                 img.style.visibility = "visible";
                 img.style.display = "block";
-                img.src = data;
+                img.src = uri;
                 document.getElementById('camera_status').innerHTML = "Success";
             },
             function(e) {
@@ -133,24 +133,23 @@
 
   </head>
   <body onload="init();">
-    <h2>PhoneGap Camera Upload Demo</h2>
+    <h3>PhoneGap Camera Upload Demo</h3>
     
     <div>
-        <h2>Server URL for upload.php:</h2>
+        <h3>Server URL for upload.php:</h3>
         <input id="serverUrl" type="text" value="http://MY_SERVER/mobile/upload.php" />
     </div>
     <br/>
 
 	<!-- Camera -->
 	<div>
-		<h2>Camera</h2>
+		<h3>Camera:</h3>
 		<b>Status:</b> <span id="camera_status"></span><br>
         <b>Image:</b> <img style="width:120px;visibility:hidden;display:none;" id="camera_image" src="" />
 	</div>
         
     <!-- Actions -->
     <div>
-        <!-- h2>Actions</h2 -->
         <input type="button" onclick="takePicture();" value="Take Picture" /><br/>
         <input type="button" onclick="selectPicture();" value="Select Picture from Library" /><br/>
         <input type="button" onclick="uploadPicture();" value="Upload Picture" />
@@ -159,14 +158,13 @@
     
     <!-- Server pictures -->
     <div>
-        <h2>Server</h2>
+        <h3>Server:</h3>
         <b>Images on server:</b>
         <div id="server_images"></div>
     </div>
 
     <!-- Actions -->
     <div>
-        <!-- h2>Actions</h2 -->
         <input type="button" onclick="viewUploadedPictures();" value="View Uploaded Pictures" />
     </div>
     
