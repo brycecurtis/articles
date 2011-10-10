@@ -1,0 +1,239 @@
+This is the PhoneGap Camera Upload Demo application.
+
+It demonstrates how to upload a picture from an Android device to a server.
+
+Setup:
+
+The "Android" directory contains an Android Project that can be imported into Eclipse.
+
+    1. Edit index.html to point to your server URL.  Search for input element with id = "serverUrl" and edit it's value.
+     
+The "Server" directory contains "upload.php" that can be installed on a web server with PHP enabled.  The directory where the the uploaded pictures are to be stored may need to be modified in "upload.php".
+
+    1. Edit upload.php to specify the upload directory.  Search for $dirname and edit it's value.
+
+To use:
+
+    1. Take a picture or select a picture from the photo album using the Camera service.
+    2. Specify the URL of the server where upload.php is located.
+    3. Upload the picture to the server using the FileTransfer service.
+    4. View the uploaded pictures on the server using XHR.
+    
+Upload a Picture using PhoneGap on Android
+
+Introduction:
+-------------
+Nearly every mobile device available today has a camera.  Given their easy use and instant availability, cameras are increasingly being used to share photos with friends and family, document activities and even deposit checks.  Paramount to sharing or saving photos is uploading the photo to a server so it can be saved by a web service.  Using hybrid web technology, PhoneGap provides HTML applications access to the device's camera and upload the photo to a server using only JavaScript.
+
+This post will show how the PhoneGap API can be used to write a simple Android application that either takes a picture or selects a photo from the device's album and uploads it to a web server.
+
+????
+Figure 1: Picture upload application.
+ 
+Getting the Picture:
+--------------------
+One of the many features included in PhoneGap's API is the Camera object.  The Camera includes a getPicture() method which takes a photo using the camera or retrieves a photo from the device's album.  It can be called from JavaScript as follows:
+
+    navigator.camera.getPicture( cameraSuccess, cameraError, [ cameraOptions ] );
+
+The cameraOptions object contains several keys.  The most interesting for our example is sourceType, which identifies the source of the photo.  The valid options are:
+
+    Camera.PictureSourceType.PHOTOLIBRARY
+    Camera.PictureSourceType.CAMERA (default)
+    Camera.PictureSourceType.SAVEDPHOTOALBUM
+
+Some platforms like Android have only one album or library, so PHOTOLIBRARY and SAVEDPHOTOALBUM both display the photo album chooser.
+
+The cameraSuccess function is called with the URI of the photo when a picture is taken or a photo is selected from the album.  This URI can be set to the src of an <img> tag to display the photo in an HTML page.  It can also be used to identify the photo to upload to a server.
+
+First we start with an HTML page that includes an <img> tag and several buttons for obtaining and uploading a picture:
+
+	<!-- Camera -->
+	<div>
+		<h3>Camera:</h3>
+		<b>Status:</b> <span id="camera_status"></span><br>
+        <b>Image:</b> <img style="width:120px;visibility:hidden;display:none;" id="camera_image" src="" />
+	</div>
+        
+    <!-- Actions -->
+    <div>
+        <input type="button" onclick="takePicture();" value="Take Picture" /><br/>
+        <input type="button" onclick="selectPicture();" value="Select Picture from Library" /><br/>
+        <input type="button" onclick="uploadPicture();" value="Upload Picture" />
+    </div>
+
+If the "Take Picture" button is pressed, the following takePicture() function is called.
+
+    /**
+     * Take picture with camera
+     */
+    function takePicture() {
+        navigator.camera.getPicture(
+            function(uri) {
+                var img = document.getElementById('camera_image');
+                img.style.visibility = "visible";
+                img.style.display = "block";
+                img.src = uri;
+                document.getElementById('camera_status').innerHTML = "Success";
+            },
+            function(e) {
+                console.log("Error getting picture: " + e);
+                document.getElementById('camera_status').innerHTML = "Error getting picture.";
+            },
+            { quality: 50, destinationType: navigator.camera.DestinationType.FILE_URI});
+    };
+
+When successful, the success callback function(uri) is called, which sets the src of the <img> tag to the URI passed in.
+
+The selectPicture() function is identical to the takePicture() function except for the sourceType parameter:
+
+    /**
+     * Select picture from library
+     */
+    function selectPicture() {
+        navigator.camera.getPicture(
+            ...
+            { quality: 50, destinationType: navigator.camera.DestinationType.FILE_URI, 
+            sourceType: navigator.camera.PictureSourceType.PHOTOLIBRARY});
+    };
+
+The URI displayed in the image element can be used 
+
+Uploading the Picture: 
+----------------------
+
+PhoneGap also includes a File API that has a FileTransfer object.  FileTransfer can be used to upload a file represented by a local URI to a web server using HTTP or HTTPS multi-part POST.
+
+A file can be uploaded by calling:
+
+    var ft = new FileTransfer();
+    ft.upload(uri, serverUrl, successCallback, errorCallback, options);
+    
+The options object includes the following keys:
+
+    fileKey: The name of the form element. If not set defaults to "file".
+    fileName: The file name you want the file to be saved as on the server. If not set defaults to "image.jpg".
+    mimeType: The mime type of the data you are uploading. If not set defaults to "image/jpeg".
+    params: A set of optional key/value pairs to be passed along in the HTTP request.
+    
+Referring to the HTML code above, clicking on the "Upload Picture" button calls uploadPicture() function.  The following code uploads the selected photo to the server:
+
+    /**
+     * Upload current picture
+     */
+    function uploadPicture() {
+    	
+    	// Get URI of picture to upload
+        var img = document.getElementById('camera_image');
+        var imageURI = img.src;
+        if (!imageURI || (img.style.display == "none")) {
+            document.getElementById('camera_status').innerHTML = "Take picture or select picture from library first.";
+            return;
+        }
+        
+        // Verify server has been entered
+        server = document.getElementById('serverUrl').value;
+        if (server) {
+        	
+            // Specify transfer options
+            var options = new FileUploadOptions();
+            options.fileKey="file";
+            options.fileName=imageURI.substr(imageURI.lastIndexOf('/')+1);
+            options.mimeType="image/jpeg";
+            options.chunkedMode = false;
+
+            // Transfer picture to server
+            var ft = new FileTransfer();
+            ft.upload(imageURI, server, function(r) {
+                document.getElementById('camera_status').innerHTML = "Upload successful: "+r.bytesSent+" bytes uploaded.";            	
+            }, function(error) {
+                document.getElementById('camera_status').innerHTML = "Upload failed: Code = "+error.code;            	
+            }, options);
+        }
+    }
+
+Server Side:
+------------
+
+To save or share the picture, it will be uploaded to a server.  Most servers will accept HTTP multi-part POST requests.  Using an Apache web server with PHP enabled, a simple PHP application can be used to receive a photo upload and save it.
+
+    <?php
+    // Directory where uploaded images are saved
+    $dirname = "/tmp/phonegap/uploads"; 
+
+    // If uploading file
+    if ($_FILES) {
+        print_r($_FILES);
+        mkdir ($dirname, 0777, true); 
+        move_uploaded_file($_FILES["file"]["tmp_name"],$dirname."/".$_FILES["file"]["name"]);
+    }
+    ?>
+
+The $dirname variable is set to a directory that can be written to by the web server.  When an upload request is received, the $_FILES variable contains the details of the uploaded file and it's temporary location.  The file is copied into $dirname; however, it could have easily been saved into a database.
+
+????
+Figure 2: Selecting a photo and uploading to server.
+
+Viewing Pictures on Server:
+---------------------------
+
+The photos saved on the server can be retrieved using PHP code to generate the HTML that will be displayed on the device.  Clicking the "View Uploaded Pictures" button will call the viewUploadedPictures() function.
+
+    /**
+     * View pictures uploaded to the server
+     */
+    function viewUploadedPictures() {
+    	
+    	// Get server URL
+        server = document.getElementById('serverUrl').value;
+        if (server) {
+        	
+            // Get HTML that lists all pictures on server using XHR	
+            var xmlhttp = new XMLHttpRequest();
+
+            // Callback function when XMLHttpRequest is ready
+            xmlhttp.onreadystatechange=function(){
+                if(xmlhttp.readyState === 4){
+
+                    // HTML is returned, which has pictures to display
+                    if (xmlhttp.status === 200) {
+                    	document.getElementById('server_images').innerHTML = xmlhttp.responseText;
+                    }
+
+                    // If error
+                    else {
+                    	document.getElementById('server_images').innerHTML = "Error retrieving pictures from server.";
+                    }
+                }
+            };
+            xmlhttp.open("GET", server , true);
+            xmlhttp.send();       	
+        }	
+    }
+
+XHR is used to call the server and render the returned HTML by setting innerHTML of the server_images <div>.
+
+????
+Figure 3: Viewing uploaded pictures on server.
+
+Code:
+-----
+
+The source code for this article is available at https://github.com/brycecurtis/articles/tree/master/CameraUpload
+
+Links:
+------
+
+PhoneGap
+    Web site: http://www.phonegap.com
+    Documentation API: http://docs.phonegap.com
+    Download: http://www.phonegap.com/download
+    Wiki: http://wiki.phonegap.com
+    Forums: 
+    - http://groups.google.com/group/phonegap 
+    - http://groups.google.com/group/phonegap-dev
+    Source code: https://github.com/phonegap
+
+Mobile application development, Part 1: PhoneGap and Dojo Mobile on Android
+    - https://www.ibm.com/developerworks/web/library/wa-mobappdev1/
+
