@@ -1,41 +1,37 @@
-
-
-
 <h1>Introduction</h1><br />
-Nearly every mobile device available today has a camera.  Given their easy use and instant availability, cameras are increasingly being used to share photos with friends and family, document activities and even deposit checks.  Paramount to sharing or saving photos is uploading the photo to a server so it can be used by a web service.  Utilizing hybrid web technologies, <span style="font-weight: bold;">PhoneGap</span> provides HTML applications access to the device's camera and upload the photo to a server using only JavaScript.<br /><br />
+Nearly every mobile device available today has a camera.  Given their easy use and instant availability, cameras are increasingly being used to share photos with friends and family, document activities and even deposit checks.  Paramount to sharing or saving photos is uploading the photo to a server so it can be used by a web service.  Utilizing mobile hybrid technologies, <span style="font-weight: bold;">PhoneGap</span> provides mobile applications access to device features and capabilities using only standards-based web technologies HTML and JavaScript - instead of requiring the application be written using native device code.<br />&nbsp;<br />
 
-This post will show how the <span style="font-weight: bold;">PhoneGap</span> API can be used to write a simple Android application that either takes a picture or selects a photo from the device's album and uploads it to a web server.<br /><br />
+This blog post will demonstrate how the <span style="font-weight: bold;">PhoneGap</span> API can be used to write a simple Android application that either takes a picture with the camera, or selects a photo from the photo album, and uploads it to a web server.  Figure 1 shows the application that will be developed.  Source code is provided for readers who want to build and run the application.<br />&nbsp;<br />
 
-<div><a href="https://www.ibm.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen1.png" target="_blank"><img alt="image" src="https://dw1.s81c.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen1.png" style=" width:200px;  display:block; margin: 0 auto;text-align: center; position:relative; border: 1px solid gray;" /></a> </div>
-<div style="text-align: center;"><span style="font-weight: bold;">Figure 1:</span> Picture upload application.</div><br />
-
+<div><a href="https://www.ibm.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen1.png" target="_blank"><img alt="image" src="https://dw1.s81c.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen1.png" style=" width:250px;  display:block; margin: 0 auto;text-align: center; position:relative; border: 1px solid gray;" /></a><br />&nbsp;</div>
+<div style="text-align: center;"><span style="font-weight: bold;">Figure 1:</span> Picture upload application.</div>&nbsp;<br />
+ 
 <h1>Getting the Picture</h1><br />
-One of the many features included in PhoneGap's API is the <span style="font-weight: bold;">Camera</span> object.  The <span style="font-weight: bold;">Camera</span> includes a <span style="font-style: italic;">getPicture</span>() method which takes a photo using the camera or retrieves a photo from the device's album.  It can be called from JavaScript as follows:<br /><br />
+One of the many features included in PhoneGap's API is the <span style="font-weight: bold;">Camera</span> object.  The <span style="font-weight: bold;">Camera</span> includes a <span style="font-style: italic;">getPicture</span>() method which takes a picture using the camera or retrieves a photo from the device's photo album.  It can be called from JavaScript as follows:<br />&nbsp;<br />
 
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-navigator.camera.getPicture( cameraSuccess, cameraError, [ cameraOptions ] );
-</pre><br />
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">navigator.camera.getPicture( cameraSuccess, cameraError, [ cameraOptions ] );
+</pre>&nbsp;<br />
 
-The <span style="font-style: italic;">cameraOptions</span> object contains several keys.  The most interesting for our example is <span style="font-style: italic;">sourceType</span>, which identifies the source of the photo.  The valid options are:<br /><br />
+The <span style="font-style: italic;">cameraOptions</span> object contains several keys.  The most interesting key is <span style="font-style: italic;">sourceType</span>, which identifies the source of the photo.  The valid <span style="font-style: italic;">sourceType</span> values are:<br />&nbsp;<br />
 
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-Camera.PictureSourceType.PHOTOLIBRARY</li>
-Camera.PictureSourceType.CAMERA (default)</li>
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">Camera.PictureSourceType.PHOTOLIBRARY</li>
+Camera.PictureSourceType.CAMERA                  <-- default value</li>
 Camera.PictureSourceType.SAVEDPHOTOALBUM</li>
-</pre><br />
+</pre>&nbsp;<br />
 
-Some platforms like Android have only one album or library, so <span style="font-style: italic;">PHOTOLIBRARY</span> and <span style="font-style: italic;">SAVEDPHOTOALBUM</span> both display the photo album chooser.<br /><br />
+Some platforms like Android have only one album or library, so <span style="font-style: italic;">PHOTOLIBRARY</span> and <span style="font-style: italic;">SAVEDPHOTOALBUM</span> both display the photo album chooser.<br />&nbsp;<br />
 
-The <span style="font-style: italic;">cameraSuccess</span> function is called with the URI of the photo when a picture is taken or a photo is selected from the album.  The <span style="font-style: italic;">src</span> attribute of an &lt;img&gt; tag can be set to this URI to display the photo in an HTML page.  The URI can also be used to identify the photo to upload to a server.<br /><br />
+The <span style="font-style: italic;">cameraSuccess</span> function is called with the URI of the photo when a picture is taken or a photo is selected from the album.  The <span style="font-style: italic;">src</span> attribute of an &lt;img&gt; tag can be set to this URI to display the photo in an HTML page.  The URI can also be used to identify the photo to upload to a server.<br />&nbsp;<br />
 
-First we start with an HTML page that includes an &lt;img&gt; tag and several buttons for obtaining and uploading a picture:<br /><br />
+First we start with an HTML page that includes an &lt;img&gt; tag and several buttons for obtaining and uploading a picture:<br />&nbsp;<br />
 
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-&lt;!-- Camera --&gt;
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">&lt;!-- Camera --&gt;
 &lt;div&gt;
     &lt;h3&gt;Camera:&lt;/h3&gt;
-    &lt;b&gt;Status:&lt;/b&gt; &lt;span id=&quot;camera_status&quot;&gt;&lt;/span&gt;&lt;br&gt;
-    &lt;b&gt;Image:&lt;/b&gt; &lt;img style=&quot;width:120px;visibility:hidden;display:none;&quot; id=&quot;camera_image&quot; src=&quot;&quot; /&gt;
+    &lt;b&gt;Status:&lt;/b&gt;
+    &lt;span id=&quot;camera_status&quot;&gt;&lt;/span&gt;&lt;br&gt;
+    &lt;b&gt;Image:&lt;/b&gt; 
+    &lt;img style=&quot;width:120px;visibility:hidden;display:none;&quot; id=&quot;camera_image&quot; src=&quot;&quot; /&gt;
 &lt;/div&gt;
 
 &lt;!-- Actions --&gt;
@@ -44,12 +40,13 @@ First we start with an HTML page that includes an &lt;img&gt; tag and several bu
     &lt;input type=&quot;button&quot; onclick=&quot;selectPicture();&quot; value=&quot;Select Picture from Library&quot; /&gt;&lt;br/&gt;
     &lt;input type=&quot;button&quot; onclick=&quot;uploadPicture();&quot; value=&quot;Upload Picture&quot; /&gt;
 &lt;/div&gt;
-</pre><br />
+</pre>&nbsp;<br />
 
-If the <b>Take Picture</b> button is pressed, the following <span style="font-style: italic;">takePicture</span>() function is called.<br /><br />
+The camera &lt;div&gt; displays the status and selected photo to be uploaded.<br />&nbsp;<br />
 
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-/**
+If the <b>Take Picture</b> button is pressed, the following <span style="font-style: italic;">takePicture</span>() function is called.<br />&nbsp;<br />
+
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">/**
  * Take picture with camera
  */
 function takePicture() {
@@ -67,12 +64,13 @@ function takePicture() {
         },
         { quality: 50, destinationType: navigator.camera.DestinationType.FILE_URI});
 };
-</pre><br />
+</pre>&nbsp;<br />
         
-When successful, the success callback <span style="font-style: italic;">function(uri) </span>is called, which sets the <span style="font-style: italic;">src</span> of the &lt;img&gt; tag to the URI passed in.<br /><br />The <span style="font-style: italic;">selectPicture</span>() function is identical to the <span style="font-style: italic;">takePicture</span>() function except for the <span style="font-style: italic;">sourceType</span> parameter:<br /><br />
+When a picture has been successfully taken, the success callback <span style="font-style: italic;">function(uri) </span>is called.  This function sets the <span style="font-style: italic;">src</span> attribute of the &lt;img&gt; tag to the URI passed in.<br />&nbsp;<br />
 
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-/**
+The <span style="font-style: italic;">selectPicture</span>() function is identical to the <span style="font-style: italic;">takePicture</span>() function except for the <span style="font-style: italic;">sourceType</span> parameter.  Thus, instead of displaying the camera, the photo album will be displayed.<br />&nbsp;<br />
+
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">/**
  * Select picture from library
  */
 function selectPicture() {
@@ -81,31 +79,28 @@ function selectPicture() {
         { quality: 50, destinationType: navigator.camera.DestinationType.FILE_URI, 
         sourceType: navigator.camera.PictureSourceType.PHOTOLIBRARY});
 };
-</pre><br />
+</pre>&nbsp;<br />
+
+For more information about the <span style="font-style: italic;">navigator.camera.getPicture</span>() method see the <a href="http://docs.phonegap.com/en/1.1.0/phonegap_camera_camera.md.html#camera.getPicture">PhoneGap Camera API</a> documentation.<br />&nbsp;<br />
 
 <h1>Uploading the Picture</h1><br />
-<span style="font-weight: bold;">PhoneGap</span> also includes a File API that has a <span style="font-weight: bold;">FileTransfer</span> object.  <span style="font-weight: bold;">FileTransfer</span> can be used to upload a file represented by a local URI to a web server using HTTP or HTTPS multi-part POST.<br /><br />
+<span style="font-weight: bold;">PhoneGap</span> also includes a File API that has a <span style="font-weight: bold;">FileTransfer</span> object.  <span style="font-weight: bold;">FileTransfer</span> can be used to upload a file represented by a local URI to a web server using HTTP or HTTPS multi-part POST.  A file can be uploaded by calling:<br />&nbsp;<br />
 
-A file can be uploaded by calling:<br /><br />
-
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-var ft = new FileTransfer();
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">var ft = new FileTransfer();
 ft.upload(uri, serverUrl, successCallback, errorCallback, options);
-</pre><br />
+</pre>&nbsp;<br />
 
-The options object includes the following keys:<br />
+The last parameter is the <span style="font-style: italic;">options</span> object which consists of the following keys:<br />&nbsp;<br />
 
-<ul>
-<li>fileKey: The name of the form element. If not set defaults to &quot;file&quot;.</li>
-<li>fileName: The file name you want the file to be saved as on the server. If not set defaults to &quot;image.jpg&quot;.</li>
-<li>mimeType: The mime type of the data you are uploading. If not set defaults to &quot;image/jpeg&quot;.</li>
-<li>params: A set of optional key/value pairs to be passed along in the HTTP request.</li>
-</ul><br />
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">fileKey:  The name of the form element. (default="file")
+fileName: The file name you want the file to be saved as on the server. (default="image.jpg")
+mimeType: The mime type of the data you are uploading. (default="image/jpeg")
+params:   A set of optional key/value pairs to be passed along in the HTTP request.
+</pre>&nbsp;<br />
 
-Referring to the HTML code above, clicking on the <b>Upload Picture</b> button calls <span style="font-style: italic;">uploadPicture</span>() function.  The following code uploads the selected photo to the server:<br /><br />
+The URI of the picture returned by the <span style="font-style: italic;">takePicture</span>() or <span style="font-style: italic;">selectPicture</span>() functions can be used by <span style="font-weight: bold;">FileTransfer</span> to upload the picture to a server.  Referring to the HTML code above, clicking on the <b>Upload Picture</b> button calls the <span style="font-style: italic;">uploadPicture</span>() function.  This function uploads the selected photo to the server:<br />&nbsp;<br />
 
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-/**
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">/**
  * Upload current picture
  */
 function uploadPicture() {
@@ -114,7 +109,8 @@ function uploadPicture() {
     var img = document.getElementById('camera_image');
     var imageURI = img.src;
     if (!imageURI || (img.style.display == "none")) {
-        document.getElementById('camera_status').innerHTML = "Take picture or select picture from library first.";
+        document.getElementById('camera_status').innerHTML = "Take picture or select 
+        picture from library first.";
         return;
     }
     
@@ -132,19 +128,22 @@ function uploadPicture() {
         // Transfer picture to server
         var ft = new FileTransfer();
         ft.upload(imageURI, server, function(r) {
-            document.getElementById('camera_status').innerHTML = "Upload successful: "+r.bytesSent+" bytes uploaded.";            	
+            document.getElementById('camera_status').innerHTML = "Upload successful: "+
+            r.bytesSent+" bytes uploaded.";            	
         }, function(error) {
-            document.getElementById('camera_status').innerHTML = "Upload failed: Code = "+error.code;            	
+            document.getElementById('camera_status').innerHTML = "Upload failed: Code = "+
+            error.code;            	
         }, options);
     }
 }
-</pre><br />
+</pre>&nbsp;<br />
 
-<h1>Server Side</h1><br />
-To save or share the picture, it will be uploaded to a server.  Most servers will accept HTTP multi-part POST requests.  Using an Apache web server with PHP enabled, a simple PHP application can be used to receive a photo upload and save it.<br /><br />
+For more information about the <span style="font-weight: bold;">FileTransfer</span> object see the <a href="http://docs.phonegap.com/en/1.1.0/phonegap_file_file.md.html#FileTransfer">PhoneGap File API</a> documentation.<br />&nbsp;<br />
 
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-&lt;?php
+<h1>Picture Server</h1><br />
+To save or share the picture, it needs to be uploaded to a server.  Most servers accept HTTP multi-part POST requests.  Using an Apache web server with PHP enabled, a simple PHP application can be used to receive a photo and save it on the server.<br />&nbsp;<br />
+
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">&lt;?php
 // Directory where uploaded images are saved
 $dirname = "/tmp/phonegap/uploads"; 
 
@@ -155,18 +154,19 @@ if ($_FILES) {
     move_uploaded_file($_FILES["file"]["tmp_name"],$dirname."/".$_FILES["file"]["name"]);
 }
 ?&gt;
-</pre><br />
+</pre>&nbsp;<br />
 
-The <span style="font-style: italic;">$dirname</span> variable is set to a directory that can be written to by the web server.  When an upload request is received, the <span style="font-style: italic;">$_FILES</span> variable contains the details of the uploaded file and it's temporary location.  The file is copied into <span style="font-style: italic;">$dirname</span>; however, it could have easily been saved into a database.<br /><br />
+The <span style="font-style: italic;">$dirname</span> variable is set to a directory that can be written to by the web server.  When an upload request is received, the <span style="font-style: italic;">$_FILES</span> variable contains the details of the uploaded file and it's temporary location.  This temporary file is copied into <span style="font-style: italic;">$dirname</span>.<br />&nbsp;<br />
 
-<div><a href="https://www.ibm.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen2.png" target="_blank"><img alt="image" src="https://dw1.s81c.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen2.png" style=" width:200px;  display:block; margin: 0 auto;text-align: center; position:relative; border: 1px solid gray;" /></a><br /></div>
-<div style="text-align: center;"><span style="font-weight: bold;">Figure 2:</span> Selecting a photo and uploading to server.<br /></div><br />
+<div><a href="https://www.ibm.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen2.png" target="_blank"><img alt="image" src="https://dw1.s81c.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen2.png" style=" width:250px;  display:block; margin: 0 auto;text-align: center; position:relative; border: 1px solid gray;" /></a><br />&nbsp;</div>
+<div style="text-align: center;"><span style="font-weight: bold;">Figure 2:</span> Selecting a photo and uploading to server.<br /></div>&nbsp;<br />
 
-<h1>Viewing Pictures on Server</h1><br />
-The photos saved on the server can be retrieved using PHP code to generate the HTML that will be displayed on the device.  Clicking the <b>View Uploaded Pictures</b> button will call the <span style="font-style: italic;">viewUploadedPictures</span>() function.<br /><br />
+Before uploading a photo to the server for our application, the server URL input text field must specify where <span style="font-style: italic;">upload.php</span> is located.<br />&nbsp;<br />
 
-<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">
-/**
+<h1>Viewing Pictures</h1><br />
+Photos saved on the server can be retrieved using PHP code that generates HTML for displaying on the device.  Clicking the <b>View Uploaded Pictures</b> button will call the following <span style="font-style: italic;">viewUploadedPictures</span>() function.<br />&nbsp;<br />
+
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">/**
  * View pictures uploaded to the server
  */
 function viewUploadedPictures() {
@@ -189,7 +189,8 @@ function viewUploadedPictures() {
 
                 // If error
                 else {
-                    document.getElementById('server_images').innerHTML = "Error retrieving pictures from server.";
+                    document.getElementById('server_images').innerHTML = "Error retrieving 
+                    pictures from server.";
                 }
             }
         };
@@ -197,15 +198,42 @@ function viewUploadedPictures() {
         xmlhttp.send();       	
     }	
 }
-</pre><br />
+</pre>&nbsp;<br />
 
-XHR is used to call the server and render the returned HTML by setting innerHTML of the <span style="font-style: italic;">server_images</span> &lt;div&gt;.<br /><br />
+An XMLHttpRequest object, also know as XHR or Ajax, is used to call the web server.  A successful result from the server is indicated by a status of 200.  Any other status indicates an error.<br />&nbsp;<br />
 
-<div><a href="https://www.ibm.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen3.png" target="_blank"><img alt="image" src="https://dw1.s81c.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen3.png" style=" width:200px;  display:block; margin: 0 auto;text-align: center; position:relative; border: 1px solid gray;" /></a><br /></div>
-<div style="text-align: center;"><span style=" font-weight: bold;">Figure 3:</span> Viewing uploaded pictures on server.</div>
+The PHP script on the server displays the file name and shows the photo by generating an HTML response using the following code:<br />&nbsp;<br />
+
+<pre style="border: 1px solid gray; background: #EEFFEE; margin-left: 50px; padding: 5px;">// If displaying images
+else {
+    $baseURI = "http://".$_SERVER['SERVER_NAME'].':'.$_SERVER['SERVER_PORT'].
+               $_SERVER['REQUEST_URI'];
+    $images = scandir($dirname);
+    $ignore = Array(".", "..");
+    if ($images) {
+        foreach($images as $curimg){ 
+            if (!in_array($curimg, $ignore)) {
+                echo "Image: ".$curimg."&lt;br&gt;";
+                echo "&lt;img src='".$baseURI."?image=".$curimg."&rnd=".uniqid()."'&gt;&lt;br&gt;"; 
+            }
+        }
+    }
+    else {
+        echo "No images on server";
+    }
+}
+</pre>&nbsp;<br />
+
+Since the successful response is already formatted as HTML, it can be rendered directly by setting innerHTML of the <span style="font-style: italic;">server_images</span> &lt;div&gt; tag as shown in Figure 3.<br />&nbsp;<br />
+
+<div><a href="https://www.ibm.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen3.png" target="_blank"><img alt="image" src="https://dw1.s81c.com/developerworks/mydeveloperworks/blogs/94e7fded-7162-445e-8ceb-97a2140866a9/resource/BLOGS_UPLOADED_IMAGES/screen3.png" style=" width:250px;  display:block; margin: 0 auto;text-align: center; position:relative; border: 1px solid gray;" /></a><br />&nbsp;</div>
+<div style="text-align: center;"><span style=" font-weight: bold;">Figure 3:</span> Viewing uploaded pictures on server.</div>&nbsp;<br />
+
+<h1>Summary</h1><br />
+This blog post showed that device features not normally available to mobile web applications can be easily accessed from JavaScript using <span style="font-weight: bold;">PhoneGap</span>.  We discussed how to use the PhoneGap APIs to take a picture or select a photo from the device's album, upload it to a PHP application on the web server, and display the photos saved on the web server - all without having to write any native device code.<br />&nbsp;<br />
 
 <h1>Code</h1><br />
-The source code for this article is available at <a href="https://github.com/brycecurtis/articles/tree/master/CameraUpload">https://github.com/brycecurtis/articles/tree/master/CameraUpload</a><br /><br />
+The source code for this blog post is available at <a href="https://github.com/brycecurtis/articles/tree/master/CameraUpload">https://github.com/brycecurtis/articles/tree/master/CameraUpload</a><br />&nbsp;<br />
 
 <h1>Links</h1><br />
 <div>
@@ -218,15 +246,12 @@ The source code for this article is available at <a href="https://github.com/bry
 <li>Forums: <ul>
 <li>User group: <a href="http://groups.google.com/group/phonegap">http://groups.google.com/group/phonegap</a></li>
 <li>Developer group: <a href="http://groups.google.com/group/phonegap-dev">http://groups.google.com/group/phonegap-dev</a></li>
-</ul></li>
+</ul>
 <li>Source code: <a href="https://github.com/phonegap">https://github.com/phonegap</a></li>
 </ul></div>
-<br /><br />
+<br />&nbsp;<br />
 <div><span style="font-weight: bold;">Articles</span>
-<ul><li><a href="https://www.ibm.com/developerworks/web/library/wa-mobappdev1/">Mobile application development, Part 1: PhoneGap and Dojo Mobile on Android</a></li></ul></div> 
-
-
-
-
-
-
+<ul>
+<li><a href="https://www.ibm.com/developerworks/web/library/wa-mobappdev1/">Mobile application development, Part 1: PhoneGap and Dojo Mobile on Android</a></li>
+<li><a href="http://simonmacdonald.blogspot.com/2011/10/changes-in-phonegap-android-110.html">Changes in PhoneGap Android 1.1.0</a></li>
+</ul></div> 
