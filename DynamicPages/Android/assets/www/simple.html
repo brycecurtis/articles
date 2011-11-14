@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>PhoneGap Dynamic Pages Demo</title>
+
+    <style>
+        #container {
+            width: 100%;
+            height: 500px;
+            position: relative;
+            overflow-x:hidden;
+            border: 1px solid black;
+        }
+
+        button {
+            display:block;
+            text-align:center;
+            margin:0 auto;
+            width:100%;
+            height:2em;
+        }
+
+        .info {
+            border:1px solid black;
+            background:#eeeeff;
+            margin:5px;
+            padding:5px;
+        }
+    </style>
+
+    <script type="text/javascript" charset="utf-8" src="phonegap-1.1.0.js"></script>
+    <script type="text/javascript" charset="utf-8" src="screen3.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+    /**
+     * Load page into url
+     *
+     * @param url           The url to load
+     * @param onleave       The function to call before leaving
+     * @param onenter       The function to call after loading
+     */
+    function loadPage(url, onleave, onenter) {
+        console.log("loadPage("+url+")");
+
+        // If onleave function specified
+        if (onleave) {
+            onleave();
+        }
+
+        var xmlhttp = new XMLHttpRequest();
+
+        // Callback function when XMLHttpRequest is ready
+        xmlhttp.onreadystatechange=function(){
+            if(xmlhttp.readyState === 4){
+                if (xmlhttp.status === 200) {
+                    console.log("Received content"+xmlhttp.responseText);
+                    document.getElementById('container').innerHTML = xmlhttp.responseText;
+
+                    // If onenter function specified
+                    if (onenter) {
+                        onenter();
+                    }
+                }
+                else {
+                    document.getElementById('container').innerHTML = "Error loading page " + url;
+                }
+            }
+        };
+        xmlhttp.open("GET", url , true);
+        xmlhttp.send();
+    }
+
+    /**
+     * Function called when page has finished loading.
+     */
+    function init() {
+
+        // Register for PhoneGap deviceready event
+        document.addEventListener("deviceready", function() {console.log("PhoneGap initialized.")}, false);
+
+        // Load first page into container
+        loadPage("screen1.html");
+    }
+    </script>
+  </head>
+  <body id="body" onload="init();">
+    <h3 id="header">PhoneGap Dynamic Pages Demo</h3>
+    <div id='container'></div>
+  </body>
+</html>

@@ -1,0 +1,239 @@
+<h1>Introduction</h1><br />
+Mobile applications vary in complexity and size from simple one screen applications to large, multi-screen apps.  To simplify development of applications that have more than one screen, JavaScript frameworks such as Dojo or JQuery can be used.  They provide a way to show one screen while hiding the remaining screens.  This is accomplished by using a single HTML file containing div tags for each screen.  The current screen is made visible by setting its css style properties.  As the application utilizes more and more screens, the HTML file grows.  Since mobile devices have limited resources, larger HTML files load and run slower - particularly upon application launch.<br /><br />
+
+To improve application performance, dynamic page loading can be used.  For an application that uses dynamic page loading, the app begins by only loading the first screen.  Based upon user interaction a new page can be displayed by retrieving the new HTML content and replacing the current screen with it.<br /><br />
+
+This blog post will describe how a PhoneGap mobile application can be structured to utilize dynamic page loading.  Source code is provided for readers who want to build and run the application.<br /><br />
+
+<h1>Dynamic Page Loading</h1><br />
+The HTML page contains a div tag where our dynamic content appears.  It also contains any JavaScript used by our application.  Referring to the code below, the container div is where we will place our content.<br /><br />
+
+<pre>
+    &lt;body id="body" onload="init();"&gt;
+        &lt;h3 id="header"&gt;PhoneGap Dynamic Pages Demo&lt;/h3&gt;
+        &lt;div id='container'&gt;&lt/div&gt;
+    &lt;/body&gt;
+</pre>
+
+This content is retrieved using XHR or Ajax from the same location that our HTML page was loaded from.  This is a security restriction to prevent cross-domain security concerns.<br /><br />
+
+The loadPage() function makes an XHR call to load the specified url.  Once the content is available, the container div is updated by setting it's innerHTML property.<br /><br />
+
+<pre>
+    /**
+     * Load page into url
+     *
+     * @param url           The url to load
+     */
+    function loadPage(url) {
+        var xmlhttp = new XMLHttpRequest();
+
+        // Callback function when XMLHttpRequest is ready
+        xmlhttp.onreadystatechange=function(){
+            if (xmlhttp.readyState === 4){
+                if (xmlhttp.status === 200) {
+                    document.getElementById('container').innerHTML = xmlhttp.responseText;
+                }
+            }
+        };
+        xmlhttp.open("GET", url , true);
+        xmlhttp.send();
+    }
+</pre>
+
+The final step in our app is to specify the initial content to display in the container div.  We have an init() function that is run after the HTML page is loaded.<br /><br />
+
+<pre>
+    /**
+     * Function called when page has finished loading.
+     */
+    function init() {
+
+        // Load first page into container
+        loadPage("screen1.html");
+    }
+</pre>
+
+<h1>Application Screens</h1>
+Now all that's remaining is to write the rest of the screens that comprise our application.  There is an HTML file for each screen in the app.  You can include navigation between screens by calling loadPage() from within a screen, or use global navigation by including links outside the container div.<br /><br />
+
+<pre>
+    &lt;body id="body" onload="init();"&gt;
+        &lt;h3 id="header"&gt;PhoneGap Dynamic Pages Demo&lt;/h3&gt;
+        &lt;div id='container'&gt;&lt/div&gt;
+        &lt;a href="screen1.html"&gt;Page 1&lt/a&gt;
+        &lt;a href="screen2.html"&gt;Page 2&lt/a&gt;
+    &lt;/body&gt;
+</pre>
+
+To navigate from within a screen, the content of screen1.html could be:<br /><br />
+
+<pre>
+    &lt;h3&gt;Screen1.html&lt;/h3&gt;
+    This is screen1.html.&lt;br&gt;
+    &lt;button type="button" onclick="loadPage('screen2.html')"&gt;Load screen 2&lt;/button&gt;
+</pre>
+
+You don't need to specify the head or body tags, since the content is HTML and will be set to the container's innerHTML.<br /><br />
+
+<h1>Running JavaScript</h1><br />
+When setting innerHTML with content any script tags are not automatically run - only the HTML content is rendered.  To execute JavaScript when a new screen is loaded the JavaScript function must already exist.  It can be included as part of the main HTML file for our application, or be located in a script file that is included.<br /><br />
+
+<pre>
+    &lt;script type="text/javascript" charset="utf-8" src="phonegap-1.1.0.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" charset="utf-8" src="screen3.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" charset="utf-8"&gt;
+
+    /**
+     * Load page into url
+     *
+     * @param url           The url to load
+     * @param onleave       The function to call before leaving
+     * @param onenter       The function to call after loading
+     */
+    function loadPage(url, onleave, onenter) {
+
+        // If onleave function specified
+        if (onleave) {
+            onleave();
+        }
+
+        var xmlhttp = new XMLHttpRequest();
+
+        // Callback function when XMLHttpRequest is ready
+        xmlhttp.onreadystatechange=function(){
+            if(xmlhttp.readyState === 4){
+                if (xmlhttp.status === 200) {
+                    document.getElementById('container').innerHTML = xmlhttp.responseText;
+
+                    // If onenter function specified
+                    if (onenter) {
+                        onenter();
+                    }
+                }
+                else {
+                    document.getElementById('container').innerHTML = "Error loading page " + url;
+                }
+            }
+        };
+        xmlhttp.open("GET", url , true);
+        xmlhttp.send();
+    }
+    &lt;/script>
+</pre>
+
+For our example above, the PhoneGap library is loaded from our HTML file since the application will use PhoneGap APIs.  In particular, we will call the compass API in screen3.html.<br /><br />
+
+Several JavaScript function are used by screen3.html to access the compass API, so we include them by loading screen3.js in our HTML file.<br /><br />
+
+We have modified loadPage() to include two additional parameters.  The onleave parameter is a function that is called when leaving the current screen, and the onenter function is called after the new screen is loaded.<br /><br />
+
+We can add a button on scree1 that loads screen2 and runs the deviceInfo() function necessary to initialize the screen3  contents.  This is accomplished by setting the onenter parameter.<br /><br />
+
+<pre>
+    &lt;h3&gt;Screen1.html&lt;/h3&gt;
+    This is screen1.html.&lt;br&gt;
+    &lt;button type="button" onclick="loadPage('screen2.html')"&gt;Load screen 2&lt;/button&gt;
+    &lt;button type="button" onclick="loadPage('screen3.html', null, deviceInfo);"&gt;Load screen 3&lt;/button&gt;
+</pre>
+
+The screen rendered by screen3.html uses PhoneGap APIs for getting the current compass heading.
+
+<pre>
+    &lt;h3&gt;Screen3.html&lt;/h3&gt;
+    This page calls PhoneGap for retrieving device information.
+    &lt;div class="info"&gt;
+        Platform: &lt;span id="platform"&gt;&nbsp;&lt;/span&gt;&lt;br&gt;
+        Version: &lt;span id="version"&gt;&nbsp;&lt;/span&gt;&lt;br&gt;
+        UUID: &lt;span id="uuid"&gt;&nbsp;&lt;/span&gt;&lt;br&gt;
+    &lt;/div&gt;
+    &lt;br&gt;
+    You can press one of the buttons below to get the compass reading.
+    &lt;div class="info"&gt;
+        Heading: &lt;span id="compassHeading"&gt;&nbsp;&lt;/span&gt;&lt;br&gt;
+    &lt;/div&gt;
+    &lt;br&gt;
+    &lt;button type="button" onclick="getCompass();"&gt;Get Compass&lt;/button&gt;
+    &lt;button type="button" onclick="watchCompass();"&gt;Begin Watch Compass&lt;/button&gt;
+    &lt;button type="button" onclick="stopWatchCompass();"&gt;Stop Watch Compass&lt;/button&gt;
+    &lt;br&gt;
+    &lt;button type="button" onclick="loadPage('screen1.html');"&gt;Load screen 1&lt;/button&gt;
+    &lt;button type="button" onclick="loadPage('screen2.html');"&gt;Load screen 2&lt;/button&gt;
+</pre>
+
+It uses JavaScript functions defined in screen3.js.
+
+<pre>
+    var deviceInfo = function(){
+      document.getElementById("platform").innerHTML = device.platform;
+      document.getElementById("version").innerHTML = device.version;
+      document.getElementById("uuid").innerHTML = device.uuid;
+    }
+
+    var getCompass = function() {
+        ...
+    }
+
+    var watchCompass = function() {
+        ...
+    }
+
+    var stopWatchCompass = function() {
+        ...
+    }
+</pre>
+
+When screen3.html is loaded with loadPage('screen3.html', null, deviceInfo), the deviceInfo() function is called immediately after the file is loaded.  This fills in the device information determined by PhoneGap.<br />&nbsp;<br />
+
+<h1>Transitions between Screens</h1><br />
+JavaScript toolkits such as Dojo have transitions or animations when navigating from one screen to another.  This feature can be easily added to our example by using the css webkitTransition property.  Instead of replacing the container content with our new screen, two divs can be used as HTML containers between which we animate.<br />&nbsp;<br />
+
+<pre>
+    // Slide div0 out and div1 in from left 
+    div1.innerHTML = content;
+    div0.style.webkitTransition = "left 0.5s ease-in";
+    div1.style.webkitTransition = "left 0.5s ease-in";
+    div0.style.left = "-100%";
+    div1.style.left = "0px";
+    
+    // Clear transition so div0 can be moved to the right of div1
+    setTimeout(function() {
+        div0.style.webkitTransition = null;
+        div1.style.webkitTransition = null;
+        div0.style.left = "100%";
+    	
+    }, 500);
+</pre>
+
+The preceeding code slides both div0 and div1 left at the same rate, with div0 sliding off the screen to the left and div1 sliding onto the screen from the right.<br />&nbsp;<br />
+
+Once the transition is completed after 0.5 seconds, we reposition div0 at left=100% so that it can be used for the next screen to slide in from the right.  With the transitions specified above, all screens will slide from right to left.  You can reverse this by specifying a different direction in the webkitTransition property.<br />&nbsp;<br />
+
+<h1>Summary</h1><br />
+This blog post showed how to write mobile applications that use dynamic page loading to load each screen of an app individually instead of loading all screens at once from a single HTML file.  This results in shorter startup times for large, complex mobile applications, and simplifies development and management of individual screens.<br />&nbsp;<br />
+
+<h1>Code</h1><br />
+The source code for this blog post is available as an Android project at <a href="https://github.com/brycecurtis/articles/tree/master/DynamicPages">https://github.com/brycecurtis/articles/tree/master/DynamicPages</a>.<br />&nbsp;<br />
+
+The index.html file has links for two examples.  The first one, simple.html, demonstrates how to do a simple replace of content in a container div.  The second file, transition.html, demonstrates how to use two divs to animate the transition between screens.<br />&nbsp;<br />
+
+<h1>Links</h1><br />
+<div>
+<span style="font-weight: bold;">PhoneGap</span>
+<ul>
+<li>Web site: <a href="http://www.phonegap.com">http://www.phonegap.com</a></li>
+<li>Documentation API: <a href="http://docs.phonegap.com">http://docs.phonegap.com</a></li>
+<li>Download: <a href="http://www.phonegap.com/download">http://www.phonegap.com/download</a></li>
+<li>Wiki: <a href="http://wiki.phonegap.com">http://wiki.phonegap.com</a></li>
+<li>Forums: <ul>
+<li>User group: <a href="http://groups.google.com/group/phonegap">http://groups.google.com/group/phonegap</a></li>
+<li>Developer group: <a href="http://groups.google.com/group/phonegap-dev">http://groups.google.com/group/phonegap-dev</a></li>
+</ul>
+<li>Source code: <a href="https://github.com/callback">https://github.com/callback</a></li>
+</ul></div>
+<br />&nbsp;<br />
+<div><span style="font-weight: bold;">Articles</span>
+<ul>
+<li><a href="https://www.ibm.com/developerworks/web/library/wa-mobappdev1/">Mobile application development, Part 1: PhoneGap and Dojo Mobile on Android</a></li>
+<li><a href="http://simonmacdonald.blogspot.com/2011/10/changes-in-phonegap-android-110.html">Changes in PhoneGap Android 1.1.0</a></li>
+</ul></div> 

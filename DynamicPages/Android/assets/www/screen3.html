@@ -1,0 +1,19 @@
+<h3>Screen3.html</h3>
+This screen calls PhoneGap for retrieving device information.
+<div class="info">
+    Platform: <span id="platform">&nbsp;</span><br>
+    Version: <span id="version">&nbsp;</span><br>
+    UUID: <span id="uuid">&nbsp;</span><br>
+</div>
+<br>
+You can press one of the buttons below to get the compass reading.
+<div class="info">
+    Heading: <span id="compassHeading">&nbsp;</span><br>
+</div>
+<br>
+<button type="button" onclick="getCompass();">Get Compass</button>
+<button type="button" onclick="watchCompass();">Begin Watch Compass</button>
+<button type="button" onclick="stopWatchCompass();">Stop Watch Compass</button>
+<br>
+<button type="button" onclick="loadPage('screen1.html');">Show screen 1</button>
+<button type="button" onclick="loadPage('screen2.html');">Show screen 2</button>

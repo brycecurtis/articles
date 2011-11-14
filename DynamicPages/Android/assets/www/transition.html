@@ -1,0 +1,170 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>PhoneGap Dynamic Pages Demo</title>
+
+    <style>
+        #container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow-x:hidden;
+            border: 1px solid black;
+        }
+
+        #div0 {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+
+        #div1 {
+            width: 100%;
+            position: absolute;
+            left: 100%;
+            height: 100%;
+        }
+
+        button {
+            display:block;
+            text-align:center;
+            margin:0 auto;
+            width:100%;
+            height:2em;
+        }
+        
+        .info {
+            border:1px solid black;
+            background:#eeeeff;
+            margin:5px;
+            padding:5px;
+        }
+    </style>
+    <script type="text/javascript" charset="utf-8" src="phonegap-1.1.0.js"></script>
+    <script type="text/javascript" src="screen3.js"></script>
+    <script type="text/javascript" charset="utf-8">
+    
+    // Current div displayed
+    var divIndex = -1;
+    
+    // Divs used to display content using transition
+    var div0 = null;
+    var div1 = null;
+    
+    /**
+     * Load page into url
+     *
+     * @param url           The url to load
+     * @param onleave       The function to call before leaving
+     * @param onenter       The function to call after loading
+     */
+    function loadPage(url, onleave, onenter) {
+    	
+    	// If onleave function specified
+    	if (onleave) {
+    		onleave();
+    	}
+    	
+        var xmlhttp = new XMLHttpRequest();
+
+        // Callback function when XMLHttpRequest is ready
+        xmlhttp.onreadystatechange=function(){
+            if(xmlhttp.readyState === 4){
+                if (xmlhttp.status === 200) {
+                	console.log("Received content"+xmlhttp.responseText);
+                	animate(xmlhttp.responseText);
+                	
+                	// If onenter function specified
+                	if (onenter) {
+                		onenter();
+                	}
+                }
+                else {
+                	animate("Error loading page " + url);
+                }
+            }
+        };
+        console.log("loadPage("+url+")");
+        xmlhttp.open("GET", url , true);
+        xmlhttp.send();
+    }
+    
+    function animate(content) {
+    	if (divIndex === 0) {
+    		
+    		// Slide div0 out and div1 in from left 
+    		div1.innerHTML = content;
+            div0.style.webkitTransition = "left 0.5s ease-in";
+            div1.style.webkitTransition = "left 0.5s ease-in";
+            div0.style.left = "-100%";
+            div1.style.left = "0px";
+            
+            // Clear transition so div0 can be moved to the right of div1
+            setTimeout(function() {
+                div0.style.webkitTransition = null;
+                div1.style.webkitTransition = null;
+                div0.style.left = "100%";
+            	
+            }, 500);
+            
+            divIndex = 1;
+    	}
+    	else {
+            div0.innerHTML = content;
+            if (divIndex === 1) {
+            	
+            	// Slide div1 out and di0 in from left
+                div0.style.webkitTransition = "left 0.5s ease-in";
+                div1.style.webkitTransition = "left 0.5s ease-in";
+                div1.style.left = "-100%";
+                div0.style.left = "0px";
+                
+                // Clear transition so div1 can be moved to the right of div0
+                setTimeout(function() {
+                    div0.style.webkitTransition = null;
+                    div1.style.webkitTransition = null;
+                    div1.style.left = "100%";
+                    
+                }, 500);
+            }
+            divIndex = 0;
+    	}
+    }
+    
+    /**
+     * Function called when page has finished loading.
+     */
+    function init() {
+    	// Get div elements for later
+    	div0 = document.getElementById('div0');
+    	div1 = document.getElementById('div1');
+    	
+    	// Set height of container
+        var height = window.innerHeight;
+        var el = document.getElementById('header');
+        var heightHeader = parseInt(getComputedStyle(el).height, 10);
+        var heightMtop = parseInt(getComputedStyle(el).marginTop, 10);
+        var heightMbot = parseInt(getComputedStyle(el).marginBottom, 10);
+        console.log("height="+height);
+        console.log("Hheight="+heightHeader);
+        console.log("margin="+heightMtop);
+    	document.getElementById('container').style.height = (height - heightHeader - heightMtop - heightMbot - 10) + "px";
+
+        // Register for PhoneGap deviceready event
+        document.addEventListener("deviceready", function() {console.log("PhoneGap initialized.")}, false);
+
+    	// Load first page into container
+        loadPage("screen1.html");
+    }
+    </script>
+  </head>
+  <body id="body" onload="init();">
+    <h3 id="header">PhoneGap Dynamic Pages Demo</h3>
+    <div id='container'>
+        <div id='div0'></div>
+        <div id='div1'></div>
+    </div>
+  </body>
+</html>
